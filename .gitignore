@@ -1,0 +1,15 @@
+venv/
+env/
+ENV/
+.env
+
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+chromadb/
+chroma_db/
+
+*.log
+.DS_Store
