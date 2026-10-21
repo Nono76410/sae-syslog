@@ -48,9 +48,6 @@ OLLAMA_KEEP_ALIVE = os.getenv("OLLAMA_KEEP_ALIVE", "30m")  # garde le modèle en
 OLLAMA_NUM_PREDICT = int(os.getenv("OLLAMA_NUM_PREDICT", "500"))  # borne la longueur
 OLLAMA_NUM_CTX = int(os.getenv("OLLAMA_NUM_CTX", "4096"))
 
-# Les Gemini 2.5 sont retirés depuis le 16 octobre 2026 (erreur 404).
-# Ordre : modèle le plus récent -> repli stable -> repli léger.
-# Liste à jour : https://ai.google.dev/gemini-api/docs/models
 GEMINI_MODELS = [
     m.strip()
     for m in os.getenv(
