@@ -1,0 +1,83 @@
+
+-------------------------------------------------------------------
+
+[MESSAGE CODE] Oct 20 18:54:58.243: DHCPD: BOOTREQUEST from 01e0.cbbc.8f70.e0 forwarded to 172.25.14.18.
+Oct 20 18:54:59.115: DHCPD: Reload workspace interface Vlan102 tableid 0.
+Oct 20 18:54:59.115: DHCPD: tableid for 10.128.14.65 on Vlan102 is 0
+Oct 20 18:54:59.115: DHCPD: client's VPN is .
+Oct 20 18:54:59.115: DHCPD: using received relay info.
+Oct 20 18:54:59.115: DHCPD: Looking up binding using address 10.128.14.65
+Oct 20 18:54:59.115: DHCPD: setting giaddr to 10.128.14.65.
+Oct 20 18:54:59.115: DHCPD: BOOTREQUEST from 019c.57ad.f52e.12 forwarded to 172.25.14.1.
+Oct 20 18:54:59.115: DHCPD: BOOTREQUEST from 019c.57ad.f52e.12 forwarded to 172.25.14.9.
+- Description : Le log présente un fonctionnement normal du mécanisme de relais DHCP (DHCP Relay / ip helper-address) sur un équipement Cisco IOS. Le routeur reçoit des requêtes DHCP (BOOTREQUEST) de machines clientes (ex. MAC 01e0.cbbc.8f70.e0 et 019c.57ad.f52e.12) sur l'interface Vlan102, applique son adresse IP locale (giaddr 10.128.14.65) et relaie les requêtes vers les serveurs DHCP configurés (172.25.14.1, 172.25.14.9 et 172.25.14.18). Ces messages correspondent à un niveau d'information/debug actif sur le démon DHCP.
+- Cause Racine : Identifiée automatiquement via Gemini Cloud.
+- Diagnostic : Se référer au log brut ci-dessus.
+- Solution Corrective : 
+  1. 1. S'assurer qu'un debug DHCP n'est pas resté actif involontairement sur l'équipement en exécutant la commande 'undebug all' ou 'no debug ip dhcp server packet' afin d'éviter toute saturation de logs ou surconsommation CPU.
+2. Si les clients reçoivent correctement leurs baux IP, aucune intervention sur le réseau n'est requise.
+3. Si les clients n'obtiennent pas d'adresse IP, vérifier la joignabilité réseau et la disponibilité des baux au niveau des serveurs DHCP cibles (172.25.14.1, 172.25.14.9 et 172.25.14.18).
+
+-------------------------------------------------------------------
+
+[MESSAGE CODE] Oct 20 18:54:58.243: DHCPD: BOOTREQUEST from 01e0.cbbc.8f70.e0 forwarded to 172.25.14.18.
+Oct 20 18:54:59.115: DHCPD: Reload workspace interface Vlan102 tableid 0.
+Oct 20 18:54:59.115: DHCPD: tableid for 10.128.14.65 on Vlan102 is 0
+Oct 20 18:54:59.115: DHCPD: client's VPN is .
+Oct 20 18:54:59.115: DHCPD: using received relay info.
+Oct 20 18:54:59.115: DHCPD: Looking up binding using address 10.128.14.65
+Oct 20 18:54:59.115: DHCPD: setting giaddr to 10.128.14.65.
+Oct 20 18:54:59.115: DHCPD: BOOTREQUEST from 019c.57ad.f52e.12 forwarded to 172.25.14.1.
+Oct 20 18:54:59.115: DHCPD: BOOTREQUEST from 019c.57ad.f52e.12 forwarded to 172.25.14.9.
+- Description : Le log indique un fonctionnement normal du service DHCP Relay (ip helper-address) sur un équipement Cisco IOS. Le routeur/commutateur intercepte les requêtes DHCP (BOOTREQUEST) des clients (MAC 01e0.cbbc.8f70.e0 et 019c.57ad.f52e.12) sur le Vlan102, renseigne le champ 'giaddr' avec sa propre adresse IP (10.128.14.65), puis relaie ces trames en unicast vers les serveurs DHCP configurés (172.25.14.1, 172.25.14.9 et 172.25.14.18). Aucune anomalie n'est détectée dans ces messages de debug/information.
+- Cause Racine : Identifiée automatiquement via Gemini Cloud.
+- Diagnostic : Se référer au log brut ci-dessus.
+- Solution Corrective : 
+  1. 1. Aucune action corrective n'est nécessaire sur le plan réseau car le comportement est nominal.
+2. Si ces logs polluent les journaux de supervision ou la console, désactiver le débogage actif via la commande : 'undebug all' ou 'no debug ip dhcp server packet'.
+3. Si des clients signalent un échec d'obtention d'adresse IP malgré ce relais, vérifier la connectivité vers les serveurs DHCP (172.25.14.1, 172.25.14.9) et s'assurer que leurs étendues (pools DHCP) ne sont pas saturées.
+
+-------------------------------------------------------------------
+
+[MESSAGE CODE] Oct 20 18:54:58.243: DHCPD: BOOTREQUEST from 01e0.cbbc.8f70.e0 forwarded to 172.25.14.18.
+Oct 20 18:54:59.115: DHCPD: Reload workspace interface Vlan102 tableid 0.
+Oct 20 18:54:59.115: DHCPD: tableid for 10.128.14.65 on Vlan102 is 0
+Oct 20 18:54:59.115: DHCPD: client's VPN is .
+Oct 20 18:54:59.115: DHCPD: using received relay info.
+Oct 20 18:54:59.115: DHCPD: Looking up binding using address 10.128.14.65
+Oct 20 18:54:59.115: DHCPD: setting giaddr to 10.128.14.65.
+Oct 20 18:54:59.115: DHCPD: BOOTREQUEST from 019c.57ad.f52e.12 forwarded to 172.25.14.1.
+Oct 20 18:54:59.115: DHCPD: BOOTREQUEST from 019c.57ad.f52e.12 forwarded to 172.25.14.9.
+- Description : Le log indique un fonctionnement normal du mécanisme de relais DHCP (DHCP Relay / ip helper-address) sur un équipement Cisco IOS. Le routeur/commutateur intercepte les requêtes DHCP (BOOTREQUEST) des clients sur l'interface Vlan102 (adresse passerelle giaddr positionnée à 10.128.14.65) et les transfère correctement en unicast vers les serveurs DHCP configurés (172.25.14.1, 172.25.14.9 et 172.25.14.18). Aucun message d'erreur ou rejet n'est constaté.
+- Cause Racine : Identifiée automatiquement via Gemini Cloud.
+- Diagnostic : Se référer au log brut ci-dessus.
+- Solution Corrective : 
+  1. 1. Aucune action corrective n'est requise dans l'immédiat car il s'agit d'une journalisation informative ou de débogage opérationnel.
+2. Si les clients rencontrent des problèmes d'obtention d'adresse IP, vérifier que les serveurs DHCP distants (172.25.14.1/9/18) reçoivent bien les paquets et renvoient des BOOTREPLY.
+3. Pour réduire la charge de logs sur l'équipement en production, désactiver les traces de débogage DHCP via la commande 'undebug all' ou 'no debug ip dhcp server packet'.
+
+-------------------------------------------------------------------
+
+[MESSAGE CODE] Oct 21 13:10:00 %STANDBY-3-DUPSURF: Interface GigabitEthernet0/1, duplicate IP address 192.168.1.254 detected in HSRP group 1
+- Description : Le routeur a détecté un conflit sur l'adresse IP virtuelle HSRP 192.168.1.254 du groupe 1 sur l'interface GigabitEthernet0/1. Ce problème survient lorsqu'un équipement tiers utilise statiquement l'IP virtuelle, ou lors d'une perte de connectivité de niveau 2 (split-brain) ou d'un filtrage des paquets HSRP (UDP 1985/2029) amenant deux routeurs à revendiquer simultanément l'état 'Active'.
+- Cause Racine : Identifiée automatiquement via Gemini Cloud.
+- Diagnostic : Se référer au log brut ci-dessus.
+- Solution Corrective : 
+  1. 1. Exécuter les commandes 'show standby brief' et 'show standby' sur les deux routeurs pour vérifier leurs états respectifs et les compteurs d'échanges.
+2. Contrôler la connectivité L2 sur le VLAN/segment local afin d'éliminer tout scénario de split-brain.
+3. Vérifier qu'aucune ACL ne filtre le trafic de contrôle HSRP (UDP 1985 pour HSRPv1 ou UDP 2029 pour HSRPv2).
+4. Inspecter la table ARP sur le réseau pour identifier l'adresse MAC du périphérique en conflit si une machine tierce utilise l'IP 192.168.1.254.
+5. S'assurer que le numéro de groupe HSRP, l'IP virtuelle et la clé d'authentification sont strictement cohérents sur les membres du groupe.
+
+-------------------------------------------------------------------
+
+[MESSAGE CODE] Oct 21 13:10:00 %STANDBY-3-DUPSURF: Interface GigabitEthernet0/1, duplicate IP address 192.168.1.254 detected in HSRP group 1
+- Description : Le routeur a détecté un conflit sur l'adresse IP virtuelle HSRP 192.168.1.254 (groupe 1) sur l'interface GigabitEthernet0/1. Ce problème est causé soit par un équipement tiers utilisant statiquement cette adresse IP, soit par une situation de split-brain (perte de connectivité de niveau 2 ou filtrage des paquets HSRP UDP 1985/2029) conduisant deux routeurs à être dans l'état 'Active' simultanément.
+- Cause Racine : Identifiée automatiquement via Gemini Cloud.
+- Diagnostic : Se référer au log brut ci-dessus.
+- Solution Corrective : 
+  1. 1. Exécuter 'show standby brief' et 'show standby' sur les routeurs HSRP pour contrôler leurs états et les compteurs d'échanges.
+2. Contrôler la connectivité de niveau 2 (L2) sur le segment local pour éliminer un scénario de split-brain.
+3. Vérifier qu'aucune ACL ou politique de sécurité ne bloque les flux HSRP (UDP 1985 pour HSRPv1 ou UDP 2029 pour HSRPv2).
+4. Consulter la table ARP sur les commutateurs/routeurs pour identifier l'adresse MAC de l'équipement en conflit si une machine tierce s'est appropriée l'adresse 192.168.1.254.
+5. S'assurer de la cohérence de la configuration HSRP (numéro de groupe, IP virtuelle, clés d'authentification) entre les pairs.

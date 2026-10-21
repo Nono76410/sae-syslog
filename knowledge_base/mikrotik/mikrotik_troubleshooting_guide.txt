@@ -1,0 +1,171 @@
+===================================================================
+MIKROTIK ROUTEROS TROUBLESHOOTING & LOG MESSAGES GUIDE (LINKT)
+Équipements : SXT LTE, LHG LTE, ATL LTE, Chateau LTE, wAP LTE (RouterOS v6/v7)
+===================================================================
+
+[MESSAGE CODE] lte,error lte1: mbim/qmi interface down / modem hung
+- Description : Perte de communication entre RouterOS et le module modem LTE intégré ou externe.
+- Cause Racine : Plantage du firmware du modem radio, instabilité d'alimentation PoE, ou surchauffe du boîtier d'antenne extérieure.
+- Diagnostic :
+  1. Exécuter en CLI : '/interface lte print' pour vérifier si l'interface lte1 est présente.
+  2. Exécuter : '/interface lte info lte1 once' pour lire le statut d'initialisation du modem.
+- Solution Corrective :
+  1. Effectuer une réinitialisation électrique du modem : '/interface lte reset-modem lte1'.
+  2. Si le problème persiste, redémarrer l'antenne extérieure : '/system reboot'.
+
+-------------------------------------------------------------------
+
+[MESSAGE CODE] lte,async,raw lte1: +CEREG: 2 (searching) / +CEREG: 3 (denied)
+- Description : L'antenne LTE MikroTik n'arrive pas à s'enregistrer sur le réseau cellulaire de l'opérateur.
+- Cause Racine :
+  - Status 2 (searching) : Signal radio trop faible, alignement d'antenne décalé, ou aucune antenne-relais à portée.
+  - Status 3 (denied) : Carte SIM non activée, forfait épuisé, ou blocage d'IMEI/APN.
+- Diagnostic :
+  1. Relever les métriques radio : '/interface lte monitor lte1 once'.
+  2. Vérifier RSRP (doit être > -110 dBm), RSRQ (doit être > -15 dB) et SINR (doit être > 0 dB).
+- Solution Corrective :
+  1. Renseigner l'APN opérateur Linkt : '/interface lte apn set [find default=yes] apn="APN_LINKT"'.
+  2. Réorienter physiquement l'antenne directive (LHG/ATL) vers le pylône cellulaire le plus proche en s'aidant des LEDs de signal arrière.
+
+-------------------------------------------------------------------
+
+[MESSAGE CODE] lte,account lte1: SIM card not inserted / PIN required
+- Description : La carte SIM n'est pas détectée ou reste verrouillée par son code PIN.
+- Cause Racine : Carte SIM mal insérée dans le slot (SIM1 / SIM2), faux contact lié aux vibrations/températures extrêmes, ou code PIN non configuré dans RouterOS.
+- Diagnostic :
+  1. Vérifier la détection physique : '/interface lte print' (colonne STATUS).
+- Solution Corrective :
+  1. Définir le code PIN dans la configuration APN/LTE : '/interface lte apn set [find default=yes] pin="0000"'.
+  2. S'il y a un plateau double SIM : forcer la sélection du bon slot SIM : '/interface lte slot set lte1 slot=sim1'.
+
+-------------------------------------------------------------------
+
+[MESSAGE CODE] wireless,info XX:XX:XX:XX:XX:XX@wlan1: disconnected, received deauth: sending station leaving (3)
+- Description : Déconnexion d'un client Wi-Fi ou d'un pont sans-fil (PtP / PtMP).
+- Cause Racine : Obstacle physique (arbre, bâtiment), interférences radio élevées sur la bande 2.4GHz/5GHz, ou distance trop importante.
+- Diagnostic :
+  1. Lancer un balayage des fréquences pour identifier les interférences : '/interface wireless spectral-history wlan1'.
+  2. Vérifier le niveau de signal reçu (CCQ / Signal Strength) : '/interface wireless registration-table print'.
+- Solution Corrective :
+  1. Changer le canal radio vers une fréquence moins encombrée.
+  2. Activer le protocole propriétaire MikroTik NV2 ou Nstreme pour stabiliser les liaisons point-à-point longue distance.
+
+-------------------------------------------------------------------
+
+[MESSAGE CODE] System,error,critical router rebooted without proper shutdown (cause: power failure or watchdog)
+- Description : Redémarrage inopiné de l'antenne Mikrotik.
+- Cause Racine : Chute de tension sur l'injecteur PoE (PoE passive vs 802.3af/at), câble réseau trop long (>80m) avec forte chute de tension, ou déclenchement du Watchdog suite à une perte de ping.
+- Diagnostic :
+  1. Vérifier la tension d'entrée reçue par la carte : '/system health print'.
+  2. Inspecter la configuration du Watchdog : '/system watchdog print'.
+- Solution Corrective :
+  1. Remplacer l'injecteur PoE par un modèle délivrant une tension supérieure (ex: passage de 18V à 24V/48V).
+  2. Vérifier l'état de la prise RJ45 extérieure (oxydation/humidité).
+
+[MESSAGE CODE] lte,error lte1: mbim/qmi interface down / modem hung
+
+- Description : Perte de communication logicielle entre RouterOS et le modem 4G/5G intégré.
+
+- Cause Racine : Plantage du firmware modem, surchauffe du boîtier (températures extérieures), ou sous-alimentation électrique (PoE trop faible).
+
+- Diagnostic :
+
+  1. Vérifier la présence du modem : '/interface lte print'.
+
+- Solution Corrective :
+
+  1. Réinitialiser la puce radio via USB/PCIe : '/interface lte reset-modem lte1'.
+
+  2. Reboot électrique à distance via PoE : '/interface ethernet poe power-cycle ether1'.
+
+
+
+-------------------------------------------------------------------
+
+
+
+[MESSAGE CODE] lte,async,raw lte1: +CEREG: 2 (searching) / +CEREG: 3 (denied)
+
+- Description : L'antenne LTE MikroTik n'arrive pas à s'enregistrer sur le réseau cellulaire.
+
+- Cause Racine : Signal radio nul (Status 2) lié à l'orientation, ou rejet par le réseau (Status 3) lié à l'APN, un blocage SIM, ou une zone blanche non couverte.
+
+- Diagnostic :
+
+  1. Lire les valeurs RF (RSRP/SINR) : '/interface lte monitor lte1 once'.
+
+- Solution Corrective :
+
+  1. Renseigner l'APN opérateur : '/interface lte apn set [find default=yes] apn="APN_LINKT"'.
+
+  2. Effectuer un balayage des bandes pour vérifier les opérateurs visibles : '/interface lte scan lte1'.
+
+
+
+-------------------------------------------------------------------
+
+
+
+[MESSAGE CODE] wireless,info XX:XX:XX:XX:XX:XX@wlan1: disconnected, received deauth: sending station leaving (3)
+
+- Description : Déconnexion d'un client Wi-Fi ou d'un lien PTP (Point à Point) sans-fil.
+
+- Cause Racine : Interférences sévères (Radar DFS), obstacle coupant la ligne de vue (LOS), ou ack-timeout trop strict pour la distance.
+
+- Diagnostic :
+
+  1. Inspecter le niveau de bruit et d'interférence : '/interface wireless spectral-history wlan1'.
+
+  2. Vérifier le CCQ (Client Connection Quality) : '/interface wireless registration-table print'.
+
+- Solution Corrective :
+
+  1. Changer de canal pour éviter l'événement DFS (Radar detection).
+
+  2. Activer NV2 (TDMA propriétaire MikroTik) pour stabiliser les liaisons extérieures soumises aux interférences.
+
+
+
+-------------------------------------------------------------------
+
+
+
+[MESSAGE CODE] System,error,critical router rebooted without proper shutdown (cause: power failure or watchdog)
+
+- Description : Redémarrage non sollicité de l'équipement.
+
+- Cause Racine : Alimentation PoE instable, court-circuit sur l'injecteur, ou déclenchement du Watchdog logiciel à cause d'une perte de Ping.
+
+- Diagnostic :
+
+  1. Vérifier la tension d'entrée : '/system health print' (vérifier si le voltage s'effondre en charge).
+
+  2. Vérifier les logs Watchdog : '/system watchdog print'.
+
+- Solution Corrective :
+
+  1. Remplacer l'injecteur PoE 24V passif.
+
+  2. Adapter la cible du Ping Watchdog vers une IP fiable (ex: 8.8.8.8) au lieu de la passerelle de l'opérateur qui pourrait filtrer l'ICMP.
+
+
+
+-------------------------------------------------------------------
+
+
+
+[MESSAGE CODE] dhcp,critical,error dhcp-server1: rogue DHCP server detected on LAN
+
+- Description : Un serveur DHCP parasite distribue des IPs sur le réseau local, perturbant les clients.
+
+- Cause Racine : Un routeur domestique ou un switch mal configuré a été branché par un utilisateur côté LAN.
+
+- Diagnostic :
+
+  1. Lire l'alerte pour obtenir l'adresse MAC du fraudeur : '/ip dhcp-server alert print'.
+
+- Solution Corrective :
+
+  1. Utiliser le Bridge Filter pour bloquer l'adresse MAC parasite : '/interface bridge filter add src-mac-address=XX:XX:XX:XX action=drop'.
+
+  2. Isoler physiquement le port du switch distribuant ces paquets UDP 67.

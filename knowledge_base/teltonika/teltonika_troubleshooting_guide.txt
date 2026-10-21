@@ -1,0 +1,172 @@
+===================================================================
+TELTONIKA RUTOS TROUBLESHOOTING & SYSLOG MESSAGES GUIDE (LINKT)
+Équipements : RUTX09, RUTX11, RUT240, RUT950, RUTM51, TRB140 (RutOS)
+===================================================================
+
+[MESSAGE CODE] gsm.0: SIM card state changed to NOT INSERTED on modem 1
+- Description : Le modem cellulaire ne détecte plus la présence physique de la carte SIM.
+- Cause Racine : Tiroir SIM mal enclenché, faux contact causé par des vibrations, oxydation de la puce, ou bascule intempestive entre SIM1/SIM2.
+- Diagnostic :
+  1. Connexion en SSH / CLI et vérification du modem : 'gsmctl -A AT+CPIN?'
+  2. Consulter le statut de l'interface mobile : 'gsmctl -i' ou 'gsmctl -z' (lecture IMEI/SIM).
+- Solution Corrective :
+  1. Insérer à nouveau la carte SIM après hors-tension du boîtier.
+  2. Forcer l'utilisation de la carte SIM1 via la CLI : 'ubus call gsm.modem0 set_sim '{"sim":1}''
+  3. Redémarrer le service modem sans reboot complet : '/etc/init.d/gsmd restart'
+
+-------------------------------------------------------------------
+
+[MESSAGE CODE] mwan3[XXXX]: Interface mob1s1a1 (LTE) is offline (ping to 8.8.8.8 failed) / switching default route
+- Description : Le gestionnaire de failover (mwan3 / Failover RutOS) déclare la liaison mobile coupée après des pings infructueux.
+- Cause Racine : Perte de session PDP chez l'opérateur, saturation de la cellule 4G/5G, APN erroné, ou blocage du trafic ICMP.
+- Diagnostic :
+  1. Inspecter l'état du Failover en CLI : 'mwan3 status'
+  2. Relever les métriques RSRP, RSRQ et SINR : 'gsmctl -q'
+- Solution Corrective :
+  1. Tester l'activation/désactivation de l'interface mobile : 'ifdown mob1s1a1' puis 'ifup mob1s1a1'
+  2. Vérifier la configuration APN dans '/etc/config/network' (option apn 'APN_LINKT').
+  3. Relancer la négociation réseau via commande AT : 'gsmctl -A AT+QIDEACT=1' puis 'gsmctl -A AT+QIACT=1'
+
+-------------------------------------------------------------------
+
+[MESSAGE CODE] gsm.0: Network registration denied / +CREG: 0,3 or +CGREG: 0,3
+- Description : L'enregistrement du modem sur le réseau de l'opérateur mobile a été rejeté.
+- Cause Racine : Carte SIM non provisionnée, forfait Data épuisé, itinérance/roaming désactivée, ou code PIN requis non saisi.
+- Diagnostic :
+  1. Vérifier le statut de l'enregistrement réseau : 'gsmctl -A AT+CREG?' ou 'gsmctl -A AT+CGREG?'
+  2. Relever le code d'opérateur réseau (PLMN) : 'gsmctl -A AT+COPS?'
+- Solution Corrective :
+  1. Renseigner le PIN si nécessaire : 'gsmctl -A AT+CPIN="0000"'
+  2. Activer l'itinérance de données dans la configuration network si la SIM est multi-opérateur.
+
+-------------------------------------------------------------------
+
+[MESSAGE CODE] kern.warn kernel: [XXXXXX] DROP lan in: IN=eth0.1 OUT= MAC=XX:XX... SRC=... DST=... PROTO=ICMP
+- Description : Paquet rejeté par les règles de pare-feu intégrées à RutOS (Firewall / iptables / nftables).
+- Cause Racine : Tentative d'accès non autorisée sur l'interface WAN/LAN, ou tentative d'administration à distance (SSH/HTTP/HTTPS) bloquée par défaut sur l'interface publique.
+- Diagnostic :
+  1. Inspecter les règles de pare-feu actives dans '/etc/config/firewall'
+  2. Analyser les logs en direct via : 'logread -f | grep DROP'
+- Solution Corrective :
+  1. Pour autoriser l'accès distant à des fins de support Linkt : ajouter un rule-set d'autorisation d'entrée sur la zone WAN vers le port visé (ex: port 22 pour SSH, port 443 pour WebUI).
+
+-------------------------------------------------------------------
+
+[MESSAGE CODE] ping_reboot: Host 8.8.8.8 is unreachable / executing action: modem_reboot
+- Description : Le démon Ping Reboot a échoué plusieurs tests de connectivité consécutifs et réinitialise le modem radio.
+- Cause Racine : Déconnexion prolongée du réseau mobile ou problème de DNS/routage vers la cible de test.
+- Diagnostic :
+  1. Consulter la configuration du Ping Reboot : 'cat /etc/config/ping_reboot'
+- Solution Corrective :
+  1. Ajuster l'IP cible vers des passerelles d'interconnexion Linkt plutôt que des DNS génériques pour éviter les faux-positifs.
+  2. Augmenter le délai d'attente (timeout) et le nombre de tentatives en cas de faible couverture radio.
+  
+[MESSAGE CODE] gsm.0: SIM card state changed to NOT INSERTED on modem 1
+
+- Description : Perte physique de la détection de la carte SIM.
+
+- Cause Racine : Choc, fortes vibrations (cas des Teltonika embarqués dans des véhicules), oxydation des contacts SIM, basculement non maîtrisé SIM1/SIM2.
+
+- Diagnostic :
+
+  1. Interroger le modem en CLI : 'gsmctl -A AT+CPIN?'.
+
+  2. Vérifier l'état de la SIM courante : 'gsmctl -z'.
+
+- Solution Corrective :
+
+  1. Éjecter et nettoyer la carte SIM avec un chiffon sec.
+
+  2. Désactiver le basculement automatique Dual-SIM si une seule SIM est utilisée.
+
+  3. Relancer le module logiciel GSM : '/etc/init.d/gsmd restart'.
+
+
+
+-------------------------------------------------------------------
+
+
+
+[MESSAGE CODE] mwan3[XXXX]: Interface mob1s1a1 (LTE) is offline (ping to 8.8.8.8 failed) / switching default route
+
+- Description : Le service de Failover (mwan3) considère la liaison 4G/5G comme morte suite à l'échec de pings de test de santé.
+
+- Cause Racine : Antenne relayant le réseau saturée, APN incorrect, ou filtre ICMP chez le FAI bloquant le ping vers 8.8.8.8.
+
+- Diagnostic :
+
+  1. Analyser l'état du failover : 'mwan3 status'.
+
+  2. Voir les métriques du signal LTE : 'gsmctl -q'.
+
+- Solution Corrective :
+
+  1. Redémarrer l'interface réseau mobile : 'ifdown mob1s1a1 && ifup mob1s1a1'.
+
+  2. Changer les cibles de ping dans le menu Network -> Failover (utiliser un DNS FAI Linkt plutôt que Google).
+
+
+
+-------------------------------------------------------------------
+
+
+
+[MESSAGE CODE] openvpn[XXXX]: TLS Error: TLS key negotiation failed to occur within 60 seconds
+
+- Description : Impossible d'établir le tunnel OpenVPN (timeout cryptographique).
+
+- Cause Racine : Horloge interne du Teltonika désynchronisée rendant le certificat invalide, port UDP/1194 bloqué par l'opérateur mobile (CGNAT).
+
+- Diagnostic :
+
+  1. Lire les logs de connexion OpenVPN : 'logread | grep openvpn'.
+
+  2. Afficher la date système : 'date'.
+
+- Solution Corrective :
+
+  1. Forcer la synchronisation de l'heure via le réseau mobile : activer "Operator Station (NITZ)" dans System -> Time.
+
+  2. Passer OpenVPN en mode TCP (port 443) si l'opérateur mobile bloque l'UDP.
+
+
+
+-------------------------------------------------------------------
+
+
+
+[MESSAGE CODE] gsm.0: Network registration denied / +CREG: 0,3
+
+- Description : Refus d'attachement au réseau de la part de l'opérateur cellulaire.
+
+- Cause Racine : Code PIN obligatoire manquant, itinérance (Roaming) requise mais désactivée dans RutOS, ou puce non activée au niveau commercial (HLR).
+
+- Diagnostic :
+
+  1. Lire la réponse brute du réseau d'accès : 'gsmctl -A AT+CREG?'.
+
+- Solution Corrective :
+
+  1. Entrer le code PIN correct dans la configuration de l'interface mobile.
+
+  2. Cocher "Deny data roaming: OFF" dans l'interface Web (Network -> Mobile -> General).
+
+
+
+-------------------------------------------------------------------
+
+
+
+[MESSAGE CODE] kern.warn kernel: [XXXXXX] DROP lan in: IN=eth0.1 OUT= MAC=XX:XX...
+
+- Description : Rejet d'un paquet par le Firewall intégré basé sur nftables/iptables.
+
+- Cause Racine : Un périphérique sur le réseau local tente d'accéder à l'interface d'administration Teltonika via une méthode non autorisée, ou trafic entrant WAN bloqué.
+
+- Diagnostic :
+
+  1. Lire les règles actuelles : 'fw3 print'.
+
+- Solution Corrective :
+
+  1. Créer une Traffic Rule autorisant le port souhaité (ex: 443 pour le HTTPS) depuis la zone de provenance dans le pare-feu.

@@ -1,0 +1,171 @@
+===================================================================
+FORTINET FORTIOS TROUBLESHOOTING & SYSLOG MESSAGES GUIDE (LINKT)
+Équipements : FortiGate (FG-40F, FG-60F, FG-80F, FG-100F), FortiSwitch & FortiAP
+===================================================================
+
+[MESSAGE CODE] date=... logid="0101037128" type="event" subtype="vpn" level="error" msg="IPsec phase 1 error" status="negotiation_failure"
+- Description : Échec de la négociation de la Phase 1 IKE du tunnel VPN IPsec.
+- Cause Racine : Incompatibilité de la clé pré-partagée (Pre-Shared Key / PSK), incohérence dans la proposition de chiffrement (Proposal: AES, SHA, DH Group), ou IP distante incorrecte.
+- Diagnostic :
+  1. Lancer le debug IKE en CLI FortiGate :
+     'diagnose debug application ike -1'
+     'diagnose debug enable'
+  2. Vérifier les propositions IKE actives : 'get vpn ipsec tunnel summary'
+- Solution Corrective :
+  1. Vérifier la PSK des deux côtés du tunnel VPN : 'config vpn ipsec phase1-interface' -> 'edit <tunnel_name>' -> 'set psksecret <key>'.
+  2. Harmoniser la phase 1 (ex: AES256-SHA256, DH Group 14/20).
+
+-------------------------------------------------------------------
+
+[MESSAGE CODE] date=... logid="0100038000" type="event" subtype="system" level="critical" msg="Kernel session table full"
+- Description : La table de sessions du pare-feu FortiGate a atteint sa capacité maximale.
+- Cause Racine : Attaque par déni de service (DoS / SYN Flood), fuite de sessions sur le réseau local, ou dimensionnement insuffisant de l'équipement face au trafic.
+- Diagnostic :
+  1. Vérifier l'utilisation mémoire et le nombre de sessions : 'get system performance status'
+  2. Identifier les adresses IP générant le plus de sessions : 'diagnose sys session list | grep src='
+- Solution Corrective :
+  1. Réduire le délai d'expiration des sessions inactives (session TTL).
+  2. Activer les politiques de DoS Sensor sur l'interface d'entrée : 'config firewall DoS-policy'.
+
+-------------------------------------------------------------------
+
+[MESSAGE CODE] date=... logid="0100022001" type="event" subtype="system" level="warning" msg="Conserve mode entered"
+- Description : Le FortiGate est entré en mode de conservation mémoire ("Conserve Mode") car la RAM dépasse le seuil critique (généralement > 80-85%).
+- Cause Racine : Inspection UTM/SSLi trop lourde pour la RAM, processus bloqué, ou table de routage/sessions trop volumineuse.
+- Diagnostic :
+  1. Consulter les processus consommant le plus de RAM : 'diagnose sys top 1 99'
+  2. Vérifier le statut du conserve mode : 'diagnose hardware sys conserve'
+- Solution Corrective :
+  1. Désactiver temporairement l'inspection approfondie SSL / Antivirus sur les règles non critiques.
+  2. Redémarrer le processus consommant la mémoire (ex: IPS engine) : 'diagnose test application ipsmonitor 99'.
+
+-------------------------------------------------------------------
+
+[MESSAGE CODE] date=... logid="0101026000" type="event" subtype="link" level="notice" msg="Link status changed to DOWN"
+- Description : Une interface réseau physique (port FortiGate, FortiSwitch ou FortiAP) est passée à l'état DOWN.
+- Cause Racine : Câble Ethernet débranché, problème SFP/Fibre, ou négociation de vitesse/duplex échouée.
+- Diagnostic :
+  1. Inspecter l'état physique du port : 'diagnose hardware deviceinfo nic <interface_name>'
+- Solution Corrective :
+  1. Vérifier la couche 1 (câblage, module SFP, jarretière).
+  2. Forcer la vitesse en CLI si la négociation échoue : 'config system interface' -> 'edit <interface_name>' -> 'set speed 1000full'.
+
+-------------------------------------------------------------------
+
+[MESSAGE CODE] date=... logid="0100043000" type="event" subtype="fortilink" level="error" msg="FortiSwitch/FortiAP offline"
+- Description : Perte de la communication de gestion CAPWAP / FortiLink entre le FortiGate et un FortiSwitch ou un point d'accès FortiAP.
+- Cause Racine : Câble réseau déconnecté, problème d'alimentation PoE, ou mauvais VLAN de gestion (VLAN FortiLink).
+- Diagnostic :
+  1. Vérifier l'état des FortiSwitchs connectés : 'diagnose switch-controller switch-server summary'
+  2. Vérifier l'état des FortiAPs : 'diagnose wireless-controller wlac -c wtp'
+- Solution Corrective :
+  1. S'assurer que le protocole LLDP / FortiLink est bien activé sur le port d'interconnexion.
+  2. Vérifier la délivrance des adresses IP par le serveur DHCP FortiLink.
+
+[MESSAGE CODE] date=... logid="0101037128" type="event" subtype="vpn" level="error" msg="IPsec phase 1 error" status="negotiation_failure"
+
+- Description : Échec de la négociation de la Phase 1 IKE du tunnel VPN IPsec.
+
+- Cause Racine : Incompatibilité de la clé pré-partagée (PSK), incohérence dans la proposition de chiffrement (AES, SHA, DH Group), ou IP distante incorrecte.
+
+- Diagnostic :
+
+  1. Lancer le debug IKE : 'diagnose debug application ike -1' puis 'diagnose debug enable'.
+
+  2. Vérifier les propositions actives : 'get vpn ipsec tunnel summary'.
+
+- Solution Corrective :
+
+  1. Aligner la PSK : 'config vpn ipsec phase1-interface' -> 'edit <tunnel>' -> 'set psksecret <key>'.
+
+  2. Harmoniser les algorithmes Phase 1 (ex: AES256-SHA256, DH Group 14).
+
+
+
+-------------------------------------------------------------------
+
+
+
+[MESSAGE CODE] date=... logid="0101037130" type="event" subtype="vpn" level="error" msg="IPsec phase 2 error" status="negotiation_failure"
+
+- Description : La Phase 1 est montée, mais la Phase 2 (Quick Mode) échoue. Le trafic ne peut pas passer dans le tunnel.
+
+- Cause Racine : Les sélecteurs de trafic (Quick Mode Selectors / Proxy IDs) ne correspondent pas entre les deux sites (sous-réseaux source/destination inversés ou de taille différente). PFS (Perfect Forward Secrecy) activé d'un seul côté.
+
+- Diagnostic :
+
+  1. Vérifier les sélecteurs : 'get vpn ipsec tunnel details'.
+
+- Solution Corrective :
+
+  1. Corriger les réseaux source et destination dans 'config vpn ipsec phase2-interface'.
+
+  2. Vérifier l'activation de PFS et le groupe DH (set pfs enable / set dhgrp 14).
+
+
+
+-------------------------------------------------------------------
+
+
+
+[MESSAGE CODE] date=... logid="0000000013" type="event" subtype="system" level="error" msg="High CPU usage detected"
+
+- Description : Utilisation critique du processeur (> 90%) sur le FortiGate.
+
+- Cause Racine : Traitement d'inspection SSL/UTM très lourd, attaque DoS, ou dysfonctionnement du daemon 'ipsengine' ou 'wad' (Web Proxy).
+
+- Diagnostic :
+
+  1. Lister les processus consommateurs : 'diagnose sys top 2 99'.
+
+- Solution Corrective :
+
+  1. Redémarrer le daemon problématique : 'diagnose test application wad 99' ou 'diagnose test application ipsmonitor 99'.
+
+  2. Alléger l'inspection SSL (Deep Inspection) sur le trafic de confiance.
+
+
+
+-------------------------------------------------------------------
+
+
+
+[MESSAGE CODE] date=... logid="0100022001" type="event" subtype="system" level="warning" msg="Conserve mode entered"
+
+- Description : Le FortiGate est entré en mode de conservation mémoire car la RAM est saturée. L'équipement peut rejeter de nouvelles connexions.
+
+- Cause Racine : Fuite de mémoire (memory leak) dans un daemon, nombre de sessions TCP excédant la capacité de la box, base de données IPS trop volumineuse.
+
+- Diagnostic :
+
+  1. Vérifier la RAM : 'get system performance status' et 'diagnose hardware sys conserve'.
+
+- Solution Corrective :
+
+  1. Réduire le TTL des sessions inactives : 'config system session-ttl'.
+
+  2. Restreindre l'utilisation des profils antivirus sur des flux non essentiels pour libérer le cache en RAM.
+
+
+
+-------------------------------------------------------------------
+
+
+
+[MESSAGE CODE] date=... logid="0100043000" type="event" subtype="fortilink" level="error" msg="FortiSwitch/FortiAP offline"
+
+- Description : Perte de gestion CAPWAP/FortiLink entre le FortiGate et un FortiSwitch/FortiAP.
+
+- Cause Racine : Perte L1 (câblage), problème de provisionning VLAN FortiLink, serveur NTP inaccessible (certificats CAPWAP invalides).
+
+- Diagnostic :
+
+  1. Vérifier l'état : 'diagnose switch-controller switch-server summary'.
+
+  2. Vérifier l'heure du système : 'execute time'.
+
+- Solution Corrective :
+
+  1. Forcer l'autorisation du switch : 'execute switch-controller set-conn-mode <S/N> managed'.
+
+  2. S'assurer que le DHCP du VLAN FortiLink distribue bien l'IP du FortiGate comme Option 138 (CAPWAP).

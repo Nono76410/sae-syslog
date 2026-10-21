@@ -1,0 +1,150 @@
+===================================================================
+KEENETICEOS (KEENETIC) TROUBLESHOOTING & LOG MESSAGES GUIDE (LINKT)
+Équipements : KN-2911, KN-3010, Titan & Gamme KeeneticOS (CLI / Syslog)
+===================================================================
+
+[MESSAGE CODE] Ndm::Network::Interface::IP: Interface "GigabitEthernet0/0" is down / link state changed to DOWN
+- Description : Interruption du lien physique sur le port Ethernet WAN ou LAN du routeur Keenetic.
+- Cause Racine : Câble RJ45 débranché, problème de négociation de vitesse/duplex avec l'ONT/CPE de l'opérateur, ou équipement distant éteint.
+- Diagnostic :
+  1. Vérifier le statut du port via l'interface Web ou CLI : 'show interface GigabitEthernet0/0'.
+  2. Inspecter la négociation auto (100Mbps vs 1Gbps).
+- Solution Corrective :
+  1. Tester un autre câble réseau RJ45 Cat6.
+  2. Forcer la vitesse en CLI si la négociation échoue : 'interface GigabitEthernet0/0 speed 1000 duplex full'.
+  3. Vérifier le voyant d'état du port sur la face avant du Keenetic.
+
+-------------------------------------------------------------------
+
+[MESSAGE CODE] pppd[XXXX]: Could not determine remote IP address / LCP: timeout sending Config-Requests
+- Description : Échec d'établissement de la session PPP / PPPoE sur la liaison WAN.
+- Cause Racine : Mauvais identifiants de connexion (PPP Username/Password), mauvais identifiant VLAN (ex: VLAN 835), ou problème d'alignement de ligne xDSL/FTTH chez l'opérateur.
+- Diagnostic :
+  1. Consulter les logs système Keenetic : 'show log' et filtrer sur pppd.
+  2. Vérifier la présence du tagging VLAN sur l'interface WAN.
+- Solution Corrective :
+  1. Recontrôler les identifiants PPPoE fournis dans la fiche d'accès Linkt.
+  2. S'assurer que le VLAN WAN est correctement taggué : 'interface GigabitEthernet0/Vlan835'.
+
+-------------------------------------------------------------------
+
+[MESSAGE CODE] Ndm::Modem::USBNet: modem interface "UsbQmi0" link state changed to DOWN / SIM card state: NOT_READY
+- Description : Perte de la connexion cellulaire via la clé USB 4G/5G ou le modem intégré Keenetic.
+- Cause Racine : Carte SIM mal insérée ou bloquée par un code PIN, câble/dongle USB déconnecté, ou dégradation du signal radio RSRP/RSSI.
+- Diagnostic :
+  1. Exécuter 'show interface UsbQmi0' pour contrôler le statut du modem et le niveau de signal.
+  2. Vérifier le statut du code PIN de la carte SIM.
+- Solution Corrective :
+  1. Désactiver le contrôle du code PIN de la SIM ou le renseigner dans KeeneticOS : 'interface UsbQmi0 mobile pin <PIN>'.
+  2. Renseigner l'APN spécifique Linkt : 'interface UsbQmi0 mobile apn <APN_LINKT>'.
+  3. Redémarrer le sous-système USB : 'interface UsbQmi0 shutdown' puis 'no shutdown'.
+
+-------------------------------------------------------------------
+
+[MESSAGE CODE] Ndm::Service::PingCheck: "Wired8023": host 8.8.8.8 is unreachable / switching default gateway
+- Description : Le mécanisme de contrôle de qualité de liaison (PingCheck) détecte une perte de paquets sur le lien principal et déclenche le basculement.
+- Cause Racine : Micro-coupure sur la liaison principale (WAN1), perte de DNS, ou saturation du lien.
+- Diagnostic :
+  1. Vérifier le journal du PingCheck : 'show ping-check'.
+  2. Vérifier le seuil de basculement (nombre de pings perdus consécutifs).
+- Solution Corrective :
+  1. Tester la joignabilité manuelle depuis le routeur : 'ping 8.8.8.8 interface Wired8023'.
+  2. Ajuster la cible de contrôle PingCheck vers une IP de passerelle Linkt plutôt qu'un DNS public si nécessaire.
+
+-------------------------------------------------------------------
+
+[MESSAGE CODE] Ndm::Security::Firewall: rule DENY dropped packet on interface "GigabitEthernet0/0"
+- Description : Paquet rejeté par les règles de filtrage / pare-feu intégrées à KeeneticOS.
+- Cause Racine : Tentative d'accès non autorisée sur l'interface WAN publique, ou règle de redirection de port (NAT / Port Forwarding) manquante.
+- Diagnostic :
+  1. Inspecter la table de règles pare-feu active : 'show running-config ip policy'.
+- Solution Corrective :
+  1. Si un flux légitime est bloqué, ajouter une règle d'autorisation explicite dans la politique de sécurité (IP / Port d'origine).
+
+[MESSAGE CODE] Ndm::Interface::Bind: "Wireguard0": handshake with peer failed / key mismatch
+
+- Description : Échec du premier échange (handshake) sur un tunnel WireGuard configuré sur Keenetic.
+
+- Cause Racine : Asymétrie des clés (la clé publique configurée ne correspond pas à la clé privée distante), Endpoint (IP/Port) distant injoignable.
+
+- Diagnostic :
+
+  1. En CLI Keenetic (Telnet/SSH) taper : 'show wireguard'.
+
+  2. Taper : 'show interface Wireguard0' pour vérifier les trames envoyées (TX) / reçues (RX). S'il n'y a que du TX, l'Endpoint ne répond pas.
+
+- Solution Corrective :
+
+  1. Regénérer les paires de clés de chaque côté et s'assurer que la clé publique de l'hôte B est bien dans la config 'peer' de l'hôte A.
+
+  2. Vérifier que la connexion WAN principale dispose d'une IP publique (non soumise à un CGNAT opérateur).
+
+
+
+-------------------------------------------------------------------
+
+
+
+[MESSAGE CODE] pppd[123]: CHAP authentication failed / Access denied
+
+- Description : L'authentification PPPoE (liaison FTTH/ADSL) échoue lors du raccordement au concentrateur (BAS) de l'opérateur.
+
+- Cause Racine : Identifiant de connexion (fti/...) ou mot de passe incorrect.
+
+- Diagnostic :
+
+  1. Lire les logs système concernant l'interface PPPoE : 'show log | include pppd'.
+
+- Solution Corrective :
+
+  1. Vérifier et ressaisir les identifiants de connexion fournis par Linkt dans le menu Internet -> PPPoE/VPN.
+
+  2. Vérifier que le VLAN ID requis par l'infrastructure fibre (ex: VLAN 832) est correctement assigné à l'interface de numérotation.
+
+
+
+-------------------------------------------------------------------
+
+
+
+[MESSAGE CODE] kernel: usb 1-1: USB disconnect, device number 2 / Lte::Device: disconnected
+
+- Description : Déconnexion brutale du modem 4G/LTE intégré au routeur (ex: modèle Hero 4G) ou branché en USB.
+
+- Cause Racine : Température extrême provoquant une protection thermique du modem, module d'alimentation sous-dimensionné.
+
+- Diagnostic :
+
+  1. Vérifier les journaux du noyau (Kernel) : 'show log | include usb'.
+
+  2. Voir le statut du modem interne : 'show interface UsbLte'.
+
+- Solution Corrective :
+
+  1. Effectuer un redémarrage logiciel du composant USB via KeeneticOS : 'interface UsbLte power-cycle'.
+
+  2. Mettre à jour le firmware KeeneticOS vers la dernière version (Release), qui embarque souvent des mises à jour du firmware modem (Quectel/Airoha).
+
+
+
+-------------------------------------------------------------------
+
+
+
+[MESSAGE CODE] Dsl::Line: training failed, retrying... (margin too low)
+
+- Description : Le modem DSL interne n'arrive pas à se synchroniser sur la ligne en cuivre (VDSL/ADSL).
+
+- Cause Racine : Qualité de ligne téléphonique dégradée (marge au bruit SNR trop faible, atténuation forte), ou incompatibilité de profil VDSL (ex: 8b/17a).
+
+- Diagnostic :
+
+  1. Lire les métriques DSL en direct : 'show interface Dsl0'.
+
+  2. Regarder la SNR Margin (doit être > 6 dB).
+
+- Solution Corrective :
+
+  1. Brancher le routeur directement à la première prise téléphonique de l'installation (sans filtre si dégroupage total).
+
+  2. Limiter manuellement le profil de synchronisation (ex: forcer en ADSL2+ plutôt que VDSL2) pour gagner en stabilité.

@@ -1,0 +1,161 @@
+===================================================================
+CISCO IOS / IOS-XE SYSTEM MESSAGES & TROUBLESHOOTING GUIDE (LINKT)
+Équipements : C892, C921, C927, C1111, C1117, C8300 & Modules LTE
+===================================================================
+
+[MESSAGE CODE] %LINK-3-UPDOWN
+- Description : Changement d'état physique d'une interface réseau (Ethernet, Cellular ou Tunnel).
+- Cause Racine : Câble réseau débranché/défectueux, SFP hors service, problème d'alimentation sur l'équipement distant ou port désactivé administrativement.
+- Diagnostic : 
+  1. Exécuter 'show interface status' pour vérifier l'état du port.
+  2. Exécuter 'show interface <interface_id>' pour observer les erreurs CRC et drops.
+- Solution Corrective :
+  1. Vérifier le câblage physique (RJ45 / Jarretière optique).
+  2. Vérifier si le port n'est pas en shutdown : 'configure terminal' -> 'interface <interface_id>' -> 'no shutdown'.
+  3. Remplacer le module SFP ou la petite bretelle si le lien reste Down.
+
+-------------------------------------------------------------------
+
+[MESSAGE CODE] %OSPF-5-ADJCHG
+- Description : Modification de l'état d'adjacence du protocole de routage OSPF.
+- Cause Racine : Périmètre de réseau modifié, perte de connectivité L2/L1, inadéquation de MTU entre voisins OSPF, ou timers Hello/Dead incohérents.
+- Diagnostic :
+  1. Exécuter 'show ip ospf neighbor' pour lister l'état des voisins.
+  2. Exécuter 'show ip ospf interface <interface_id>' pour vérifier la zone (Area) et les timers.
+- Solution Corrective :
+  1. Si l'état reste bloqué en INIT/EXSTART : vérifier la MTU sur les deux routeurs ('ip ospf mtu-ignore' si nécessaire).
+  2. S'assurer que les deux routeurs partagent la même Area OSPF et le même masque de sous-réseau.
+
+-------------------------------------------------------------------
+
+[MESSAGE CODE] %BGP-5-ADJCHANGE / %BGP-5-NDOWN
+- Description : Session de routage BGP tombée ou réinitialisée.
+- Cause Racine : Timer Holdtime expiré, perte de la liaison IP sous-jacente, filtre ACL bloquant le port TCP 179, ou incohérence d'AS (Autonomous System).
+- Diagnostic :
+  1. Exécuter 'show ip bgp summary' pour vérifier l'état des sessions BGP.
+  2. Tester la joignabilité IP avec 'ping <IP_NEIGHBOR> source <IP_INTERFACEDEV>'.
+- Solution Corrective :
+  1. Vérifier la présence du trafic sur le port TCP 179 avec 'show ip access-lists'.
+  2. Vérifier les identifiants AS distant et local dans 'show running-config | section bgp'.
+
+-------------------------------------------------------------------
+
+[MESSAGE CODE] %CRYPTO-4-REC_VRF_FAIL / %CRYPTO-4-IKEMP
+- Description : Échec du traitement d'un paquet IPsec / IKE sur un tunnel VPN crypté.
+- Cause Racine : Incohérence des clés pré-partagées (Preshared Key), mismatch de Phase 1/Phase 2 (AES/SHA/DH Group), ou mauvaise affectation de VRF.
+- Diagnostic :
+  1. Exécuter 'show crypto is
+
+[MESSAGE CODE] %BGP-5-ADJCHANGE: neighbor [IP] Down BGP Notification sent
+
+- Description : Perte de la session BGP (Border Gateway Protocol) avec le routeur voisin.
+
+- Cause Racine : Problème de MTU (paquets BGP fragmentés/rejetés), délai de Keepalive expiré suite à une perte de lien physique, ou erreur d'authentification (mot de passe MD5 incorrect).
+
+- Diagnostic :
+
+  1. Vérifier l'état et l'historique des voisins BGP : 'show ip bgp summary' et 'show ip bgp neighbors <IP_VOISIN>'.
+
+  2. Vérifier la connectivité de base (ICMP) vers le voisin avec un paquet étendu : 'ping <IP_VOISIN> size 1500 df-bit'.
+
+- Solution Corrective :
+
+  1. Si le ping avec DF-bit échoue, corriger la MTU sur les interfaces WAN : 'ip tcp adjust-mss 1360'.
+
+  2. Vérifier l'harmonisation du mot de passe BGP des deux côtés : 'neighbor <IP> password <PASSWORD>'.
+
+
+
+-------------------------------------------------------------------
+
+
+
+[MESSAGE CODE] %IPSEC-3-EGP_DUP_SPI / %CRYPTO-4-SPI_NOT_FOUND
+
+- Description : Rejet de paquets IPsec car l'Index de Paramètre de Sécurité (SPI) est inconnu ou dupliqué.
+
+- Cause Racine : Désynchronisation de la Security Association (SA) IPsec entre le routeur Cisco local et le destinataire distant (souvent après un redémarrage rapide de l'un des deux côtés).
+
+- Diagnostic :
+
+  1. Exécuter 'show crypto ipsec sa' et vérifier les compteurs de 'invalid SPI count'.
+
+  2. Exécuter 'show crypto isakmp sa' pour observer le statut de la Phase 1.
+
+- Solution Corrective :
+
+  1. Forcer la réinitialisation des SAs IPsec sans couper les interfaces : 'clear crypto sa' ou 'clear crypto ipsec sa peer <IP_PEER>'.
+
+  2. Redémarrer la Phase 1 si la Phase 2 ne monte pas : 'clear crypto isakmp'.
+
+
+
+-------------------------------------------------------------------
+
+
+
+[MESSAGE CODE] %STANDBY-3-DUPSURF / %STANDBY-1-STATECHANGE (HSRP)
+
+- Description : Incohérence d'état sur le protocole de haute disponibilité HSRP (Hot Standby Router Protocol).
+
+- Cause Racine : Conflit d'adresse IP virtuelle, perte de connectivité L2 sur le VLAN de Keepalive (Split-Brain), ou filtrage des paquets UDP 1985 (HSRPv1) / UDP 2029 (HSRPv2) par une ACL.
+
+- Diagnostic :
+
+  1. Exécuter 'show standby brief' pour vérifier si les deux routeurs pensent être 'Active'.
+
+  2. Vérifier les compteurs de paquets sur l'interface : 'show standby'.
+
+- Solution Corrective :
+
+  1. Inspecter la connectivité du VLAN de contrôle entre les deux routeurs.
+
+  2. S'assurer que le numéro de groupe HSRP, la clé d'authentification et l'IP virtuelle sont strictement identiques des deux côtés.
+
+
+
+-------------------------------------------------------------------
+
+
+
+[MESSAGE CODE] %OSPF-5-ADJCHG: Process 1, Nbr [IP] on GigabitEthernet0/0/1 from FULL to DOWN
+
+- Description : Le voisinage OSPF est tombé, ce qui entraîne la suppression des routes OSPF de la table de routage.
+
+- Cause Racine : Incohérence des timers (Hello/Dead), mismatch des zones (Area), erreur de sous-réseau (masque différent), ou problème L2 empêchant le multicast 224.0.0.5.
+
+- Diagnostic :
+
+  1. Vérifier les paramètres OSPF sur l'interface : 'show ip ospf interface GigabitEthernet0/0/1'.
+
+  2. Comparer les timers Hello et Dead avec l'équipement distant.
+
+- Solution Corrective :
+
+  1. Réaligner les timers OSPF dans la configuration d'interface : 'ip ospf hello-interval 10' et 'ip ospf dead-interval 40'.
+
+  2. S'assurer que les deux interfaces appartiennent au même sous-réseau et à la même Area.
+
+
+
+-------------------------------------------------------------------
+
+
+
+[MESSAGE CODE] %LINK-3-UPDOWN: Interface GigabitEthernet0/1/0, changed state to down
+
+- Description : Perte de la connectivité physique (Couche 1) sur une interface Ethernet.
+
+- Cause Racine : Câble débranché, port coupé par le fournisseur d'accès (CPE distant down), ou défaut d'auto-négociation speed/duplex.
+
+- Diagnostic :
+
+  1. Lire les statistiques du port : 'show interface GigabitEthernet0/1/0'.
+
+  2. Rechercher des erreurs CRC ou des collisions (Late Collisions).
+
+- Solution Corrective :
+
+  1. Vérifier le câblage physique et l'état du SFP ('show inventory' / 'show interfaces transceiver detail').
+
+  2. Forcer la vitesse et le duplex si l'auto-négociation échoue : 'speed 1000' et 'duplex full'.
