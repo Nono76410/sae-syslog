@@ -35,18 +35,17 @@ from google import genai
 from google.genai import types
 from google.genai.errors import APIError
 
-# --------------------------------------------------------------------------- #
 # Configuration
-# --------------------------------------------------------------------------- #
 
 DEBUG = os.getenv("FLASK_DEBUG", "0") == "1"
 
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434/api/generate")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen2.5:3b")
 OLLAMA_TIMEOUT = float(os.getenv("OLLAMA_TIMEOUT", "30"))
-OLLAMA_KEEP_ALIVE = os.getenv("OLLAMA_KEEP_ALIVE", "30m")  # garde le modèle en RAM
-OLLAMA_NUM_PREDICT = int(os.getenv("OLLAMA_NUM_PREDICT", "500"))  # borne la longueur
+OLLAMA_KEEP_ALIVE = os.getenv("OLLAMA_KEEP_ALIVE", "30m")  
+OLLAMA_NUM_PREDICT = int(os.getenv("OLLAMA_NUM_PREDICT", "500"))  
 OLLAMA_NUM_CTX = int(os.getenv("OLLAMA_NUM_CTX", "4096"))
+OLLAMA_NUM_THREAD = int(os.getenv("OLLAMA_NUM_THREAD", "4"))
 
 GEMINI_MODELS = [
     m.strip()
@@ -60,7 +59,7 @@ GEMINI_MAX_TOKENS = int(os.getenv("GEMINI_MAX_TOKENS", "1500"))
 DISTANCE_THRESHOLD = float(os.getenv("DISTANCE_THRESHOLD", "0.45"))
 LEARNED_THRESHOLD = float(os.getenv("LEARNED_THRESHOLD", "0.25"))
 TOP_K = int(os.getenv("TOP_K", "3"))
-MAX_DOC_CHARS = int(os.getenv("MAX_DOC_CHARS", "1200"))  # par passage
+MAX_DOC_CHARS = int(os.getenv("MAX_DOC_CHARS", "1200"))  
 MAX_LOG_CHARS = int(os.getenv("MAX_LOG_CHARS", "8000"))
 LEARN_FROM_GEMINI = os.getenv("LEARN_FROM_GEMINI", "0") == "1"
 
